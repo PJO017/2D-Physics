@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 
-	"pjo018/2dphysics/internal/vector"
-	"pjo018/2dphysics/pkg/particle"
+	"pjo018/2dphysics/pkg/particleManager"
 	"pjo018/2dphysics/pkg/system"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -14,18 +13,19 @@ const (
 	SCREEN_WIDTH   = 800
 	SCREEN_HEIGHT  = 600
 	PARTICLE_COUNT = 1
-	FPS            = 30
+	FPS            = 120
+	TIME_STEP      = 1.0 / FPS
 	FRAME_DELAY    = 1000 / FPS
+	DAMPING_FACTOR = 0.80
 )
 
-func setup(system *system.System) {
+func setup(system *system.System) *particlemanager.Particlemanager {
 	screenWidth, screenHeight := system.Window.GetSize()
-	particle := particle.CreateParticle(float32(screenWidth)/2, float32(screenHeight)/2, 10, 10, sdl.Color{R: 120, G: 255, B: 120, A: 255})
-	acc := vector.CreateVector(0, 5)
-	vel := vector.CreateVector(0, 1)
-	particle.Velocity.AddVector(vel)
-	particle.Acceleration.AddVector(acc)
-	system.Particles = append(system.Particles, particle)
+	pm := particlemanager.CreateParticleManager()
+	for i := 0; i < PARTICLE_COUNT; i++ {
+		pm.CreateParticle(screenWidth, screenHeight)
+	}
+	return pm
 }
 
 func processInput(system *system.System) {
@@ -38,23 +38,21 @@ func processInput(system *system.System) {
 	}
 }
 
-func update(system *system.System) {
-	for _, particle := range system.Particles {
-		particle.Velocity.AddVector(particle.Acceleration.MultiplyScalarNew(float32(system.DeltaTime) / 1000))
-		fmt.Println("particle.Velocity", particle.Velocity.X, particle.Velocity.Y)
-		particle.Position.AddVector(&particle.Velocity)
+func update(pm *particlemanager.Particlemanager, deltaTime float64) {
+	for _, p := range pm.Particles {
+		p.Update(deltaTime)
+		p.HandleCollision(SCREEN_WIDTH, SCREEN_HEIGHT, DAMPING_FACTOR)
 	}
 }
 
-func render(system *system.System) {
-	system.Renderer.SetDrawColor(0, 0, 0, 255)
-	system.Renderer.Clear()
-
-	for _, particle := range system.Particles {
-		particle.Draw(system.Renderer)
+func render(pm *particlemanager.Particlemanager, renderer *sdl.Renderer) {
+	renderer.SetDrawColor(0, 0, 0, 255)
+	renderer.Clear()
+	for _, particle := range pm.Particles {
+		particle.Draw(renderer)
 	}
 
-	system.Renderer.Present()
+	renderer.Present()
 }
 
 func main() {
@@ -65,20 +63,30 @@ func main() {
 	}
 	defer sys.Destroy()
 
-	setup(sys)
+	pm := setup(sys)
 
+	accumulator := 0.0
+	previousTime := sdl.GetTicks64()
 	sys.RunningFlag = true
 	for sys.RunningFlag {
 		frameStartTime := sdl.GetTicks64()
+		frameTime := float64(frameStartTime-previousTime) / 1000
+		previousTime = frameStartTime
+
+		accumulator += frameTime
 
 		processInput(sys)
-		update(sys)
-		render(sys)
 
-		sys.DeltaTime = sdl.GetTicks64() - frameStartTime
+		for accumulator >= TIME_STEP {
+			update(pm, TIME_STEP)
+			accumulator -= TIME_STEP
+		}
 
-		if FRAME_DELAY > sys.DeltaTime {
-			sdl.Delay(uint32(FRAME_DELAY - sys.DeltaTime))
+		render(pm, sys.Renderer)
+
+		elapsedTime := float64(sdl.GetTicks64()-frameStartTime) / 1000
+		if FRAME_DELAY > elapsedTime {
+			sdl.Delay(uint32(FRAME_DELAY - elapsedTime))
 		}
 	}
 }
