@@ -12,7 +12,7 @@ import (
 const (
 	SCREEN_WIDTH   = 800
 	SCREEN_HEIGHT  = 600
-	PARTICLE_COUNT = 1
+	PARTICLE_COUNT = 10
 	FPS            = 120
 	TIME_STEP      = 1.0 / FPS
 	FRAME_DELAY    = 1000 / FPS
@@ -22,8 +22,9 @@ const (
 func setup(system *system.System) *particlemanager.Particlemanager {
 	screenWidth, screenHeight := system.Window.GetSize()
 	pm := particlemanager.CreateParticleManager()
+
 	for i := 0; i < PARTICLE_COUNT; i++ {
-		pm.CreateParticle(screenWidth, screenHeight)
+		pm.CreateRandomParticle(screenWidth, screenHeight)
 	}
 	return pm
 }
