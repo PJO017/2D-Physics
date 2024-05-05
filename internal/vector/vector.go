@@ -1,7 +1,5 @@
 package vector
 
-import "fmt"
-
 type Vector struct {
 	X, Y float32
 }
@@ -22,8 +20,19 @@ func (v *Vector) SubtractVector(v2 *Vector) *Vector {
 	return v
 }
 
+func (v *Vector) SubtractScalar(scalar float32) *Vector {
+	v.X += scalar
+	v.Y += scalar
+	return v
+}
+
+func (v *Vector) AddScalar(scalar float32) *Vector {
+	v.X += scalar
+	v.Y += scalar
+	return v
+}
+
 func (v *Vector) MultiplyScalar(scalar float32) *Vector {
-	fmt.Println("scalar", scalar)
 	v.X *= scalar
 	v.Y *= scalar
 	return v

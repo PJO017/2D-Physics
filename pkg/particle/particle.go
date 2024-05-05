@@ -2,6 +2,7 @@ package particle
 
 import (
 	"pjo018/2dphysics/internal/vector"
+	"pjo018/2dphysics/pkg/utils"
 
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -28,4 +29,27 @@ func (p *Particle) Draw(Renderer *sdl.Renderer) {
 			}
 		}
 	}
+}
+
+func (p *Particle) Update(deltaTime float64) {
+	p.ApplyForce(vector.CreateVector(0, 9.8*60))
+	p.Velocity.AddVector(p.Acceleration.MultiplyScalarNew(float32(deltaTime) / 1000))
+	p.Position.AddVector(&p.Velocity)
+}
+
+func (p *Particle) HandleCollision(screenWidth, screenHeight int, DAMPING_FACTOR float32) {
+	if p.Position.X-p.Radius < 0 || p.Position.X+p.Radius > float32(screenWidth) {
+		p.Velocity.X *= -1 * DAMPING_FACTOR
+		p.Position.X = utils.Clamp(p.Position.X, p.Radius, float32(screenWidth)-p.Radius)
+
+	}
+
+	if p.Position.Y-p.Radius < 0 || p.Position.Y+p.Radius > float32(screenHeight) {
+		p.Velocity.Y *= -1 * DAMPING_FACTOR
+		p.Position.Y = utils.Clamp(p.Position.Y, p.Radius, float32(screenHeight)-p.Radius)
+	}
+}
+
+func (p *Particle) ApplyForce(force *vector.Vector) {
+	p.Acceleration.AddVector(force.MultiplyScalarNew(1 / p.Mass))
 }

@@ -1,8 +1,6 @@
 package system
 
 import (
-	"pjo018/2dphysics/pkg/particle"
-
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -12,12 +10,14 @@ const (
 	PARTICLE_COUNT = 1
 )
 
+type Particle interface{}
+
 type System struct {
 	RunningFlag bool
 	DeltaTime   uint64
 	Renderer    *sdl.Renderer
 	Window      *sdl.Window
-	Particles   []*particle.Particle
+	Particles   []Particle
 }
 
 func (s *System) Destroy() {
@@ -41,11 +41,5 @@ func InitSystem() (*System, error) {
 		return nil, err
 	}
 
-	return &System{RunningFlag: true, DeltaTime: 0, Renderer: renderer, Window: window, Particles: []*particle.Particle{}}, nil
-}
-
-func (s *System) Update() {
-	for _, particle := range s.Particles {
-		particle.Position.X += 1
-	}
+	return &System{RunningFlag: true, DeltaTime: 0, Renderer: renderer, Window: window, Particles: []Particle{}}, nil
 }
