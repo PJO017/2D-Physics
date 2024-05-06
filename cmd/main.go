@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"pjo018/2dphysics/internal/vector"
+	"pjo018/2dphysics/pkg/particle"
 	"pjo018/2dphysics/pkg/particleManager"
 	"pjo018/2dphysics/pkg/system"
 
@@ -10,21 +12,24 @@ import (
 )
 
 const (
-	SCREEN_WIDTH   = 800
-	SCREEN_HEIGHT  = 600
-	PARTICLE_COUNT = 10
+	SCREEN_WIDTH   = 1200
+	SCREEN_HEIGHT  = 800
+	PARTICLE_COUNT = 5
 	FPS            = 120
 	TIME_STEP      = 1.0 / FPS
 	FRAME_DELAY    = 1000 / FPS
 	DAMPING_FACTOR = 0.80
+	SCALE          = 100
 )
 
-func setup(system *system.System) *particlemanager.Particlemanager {
-	screenWidth, screenHeight := system.Window.GetSize()
+func setup() *particlemanager.Particlemanager {
 	pm := particlemanager.CreateParticleManager()
 
 	for i := 0; i < PARTICLE_COUNT; i++ {
-		pm.CreateRandomParticle(screenWidth, screenHeight)
+		p := pm.CreateRandomParticle(SCREEN_WIDTH, SCREEN_HEIGHT)
+		gravityForce := particle.CreateConstantForce(*vector.CreateVector(0, 9.8*SCALE))
+		p.AddForce(gravityForce)
+		p.ApplyForces()
 	}
 	return pm
 }
@@ -57,14 +62,14 @@ func render(pm *particlemanager.Particlemanager, renderer *sdl.Renderer) {
 }
 
 func main() {
-	sys, err := system.InitSystem()
+	sys, err := system.InitSystem(SCREEN_WIDTH, SCREEN_HEIGHT)
 	if err != nil {
 		fmt.Println("Error initializing system: ", err)
 		panic(err)
 	}
 	defer sys.Destroy()
 
-	pm := setup(sys)
+	pm := setup()
 
 	accumulator := 0.0
 	previousTime := sdl.GetTicks64()
@@ -75,6 +80,7 @@ func main() {
 		previousTime = frameStartTime
 
 		accumulator += frameTime
+		accumulator = min(accumulator, TIME_STEP*2)
 
 		processInput(sys)
 
@@ -83,11 +89,11 @@ func main() {
 			accumulator -= TIME_STEP
 		}
 
-		render(pm, sys.Renderer)
-
 		elapsedTime := float64(sdl.GetTicks64()-frameStartTime) / 1000
 		if FRAME_DELAY > elapsedTime {
 			sdl.Delay(uint32(FRAME_DELAY - elapsedTime))
 		}
+
+		render(pm, sys.Renderer)
 	}
 }

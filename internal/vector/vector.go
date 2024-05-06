@@ -1,5 +1,9 @@
 package vector
 
+import (
+	"math"
+)
+
 type Vector struct {
 	X, Y float32
 }
@@ -42,5 +46,20 @@ func (v *Vector) MultiplyScalarNew(scalar float32) *Vector {
 	return &Vector{
 		X: v.X * scalar,
 		Y: v.Y * scalar,
+	}
+}
+
+func (v *Vector) Magnitude() float32 {
+	return float32(math.Sqrt(float64(v.X*v.X + v.Y*v.Y)))
+}
+
+func (v *Vector) Normalize() *Vector {
+	magnitude := v.Magnitude()
+	if magnitude == 0 {
+		return &Vector{X: 0, Y: 0}
+	}
+	return &Vector{
+		X: v.X / magnitude,
+		Y: v.Y / magnitude,
 	}
 }
