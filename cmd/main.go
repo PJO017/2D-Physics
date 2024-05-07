@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"pjo018/2dphysics/internal/vector"
+	"pjo018/2dphysics/pkg/config"
 	"pjo018/2dphysics/pkg/particle"
 	"pjo018/2dphysics/pkg/particleManager"
 	"pjo018/2dphysics/pkg/system"
@@ -11,23 +12,12 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-const (
-	SCREEN_WIDTH   = 1200
-	SCREEN_HEIGHT  = 800
-	PARTICLE_COUNT = 5
-	FPS            = 120
-	TIME_STEP      = 1.0 / FPS
-	FRAME_DELAY    = 1000 / FPS
-	DAMPING_FACTOR = 0.80
-	SCALE          = 100
-)
-
 func setup() *particlemanager.Particlemanager {
 	pm := particlemanager.CreateParticleManager()
 
-	for i := 0; i < PARTICLE_COUNT; i++ {
-		p := pm.CreateRandomParticle(SCREEN_WIDTH, SCREEN_HEIGHT)
-		gravityForce := particle.CreateConstantForce(*vector.CreateVector(0, 9.8*SCALE))
+	for i := 0; i < config.PARTICLE_COUNT; i++ {
+		p := pm.CreateRandomParticle(config.SCREEN_WIDTH, config.SCREEN_HEIGHT)
+		gravityForce := particle.CreateConstantForce(*vector.CreateVector(0, 9.8*config.SCALE))
 		p.AddForce(gravityForce)
 		p.ApplyForces()
 	}
@@ -47,7 +37,7 @@ func processInput(system *system.System) {
 func update(pm *particlemanager.Particlemanager, deltaTime float64) {
 	for _, p := range pm.Particles {
 		p.Update(deltaTime)
-		p.HandleCollision(SCREEN_WIDTH, SCREEN_HEIGHT, DAMPING_FACTOR)
+		p.HandleCollision(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, config.DAMPING_FACTOR)
 	}
 }
 
@@ -62,7 +52,7 @@ func render(pm *particlemanager.Particlemanager, renderer *sdl.Renderer) {
 }
 
 func main() {
-	sys, err := system.InitSystem(SCREEN_WIDTH, SCREEN_HEIGHT)
+	sys, err := system.InitSystem(config.SCREEN_WIDTH, config.SCREEN_HEIGHT)
 	if err != nil {
 		fmt.Println("Error initializing system: ", err)
 		panic(err)
@@ -77,22 +67,23 @@ func main() {
 	for sys.RunningFlag {
 		frameStartTime := sdl.GetTicks64()
 		frameTime := float64(frameStartTime-previousTime) / 1000
-		previousTime = frameStartTime
 
 		accumulator += frameTime
-		accumulator = min(accumulator, TIME_STEP*2)
+		accumulator = min(accumulator, config.TIME_STEP*2)
 
 		processInput(sys)
 
-		for accumulator >= TIME_STEP {
-			update(pm, TIME_STEP)
-			accumulator -= TIME_STEP
+		for accumulator >= config.TIME_STEP {
+			update(pm, config.TIME_STEP)
+			accumulator -= config.TIME_STEP
 		}
 
 		elapsedTime := float64(sdl.GetTicks64()-frameStartTime) / 1000
-		if FRAME_DELAY > elapsedTime {
-			sdl.Delay(uint32(FRAME_DELAY - elapsedTime))
+		if config.FRAME_DELAY > elapsedTime {
+			sdl.Delay(uint32(config.FRAME_DELAY - elapsedTime))
 		}
+
+		previousTime = frameStartTime
 
 		render(pm, sys.Renderer)
 	}
