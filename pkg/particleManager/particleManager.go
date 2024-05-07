@@ -37,7 +37,7 @@ func (pm *Particlemanager) CreateRandomParticle(screenWidth, screenHeight int32)
 	radius := 10 + rand.Float32()*10
 	x := 0 + rand.Float32()*(float32(screenWidth))
 	// y := 0 + rand.Float32()*(float32(screenHeight))
-	y := float32(screenHeight) - radius
+	y := float32(0) + radius
 	mass := 5 * radius
 
 	r := uint8(rand.Intn(255))
@@ -47,8 +47,8 @@ func (pm *Particlemanager) CreateRandomParticle(screenWidth, screenHeight int32)
 
 	// velX := 5 + rand.Float32()*5
 	// velY := 10 + rand.Float32()*10
-	velX := float32(15)
-	velY := float32(-1)
+	velX := float32(1)
+	velY := float32(0)
 
 	particle := particle.CreateParticle(x, y, radius, mass, sdl.Color{R: r, G: g, B: b, A: a})
 	particle.Velocity.AddVector(&vector.Vector{X: velX, Y: velY})

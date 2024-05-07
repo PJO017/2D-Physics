@@ -1,19 +1,11 @@
 package particle
 
 import (
-	"fmt"
-
 	"pjo018/2dphysics/internal/vector"
+	"pjo018/2dphysics/pkg/config"
 	"pjo018/2dphysics/pkg/utils"
 
 	"github.com/veandco/go-sdl2/sdl"
-)
-
-const (
-	FRICTION_COEFFIECIENT = 0.5
-	SCALE                 = 100
-	SCREEN_WIDTH          = 1200
-	SCREEN_HEIGHT         = 800
 )
 
 type Particle struct {
@@ -44,7 +36,6 @@ func (p *Particle) Draw(Renderer *sdl.Renderer) {
 func (p *Particle) Update(deltaTime float64) {
 	p.ApplyForces()
 	frictionForce := p.ApplyFriction()
-	fmt.Println("acc", p.Acceleration.X, p.Acceleration.Y)
 	p.Velocity.AddVector(p.Acceleration.MultiplyScalarNew(float32(deltaTime) / 1000))
 	p.Position.AddVector(&p.Velocity)
 
@@ -75,9 +66,8 @@ func (p *Particle) ApplyForce(force *vector.Vector) {
 }
 
 func (p *Particle) ApplyFriction() *vector.Vector {
-	if p.OnSurface() {
-		fmt.Println("On surface")
-		frictionMagnitude := float64(FRICTION_COEFFIECIENT * p.Mass * 9.8 * SCALE)
+	if p.OnGround() {
+		frictionMagnitude := float64(config.FRICTION_COEFFIECIENT * p.Mass * 9.8 * config.SCALE)
 		frictionForce := p.Velocity.Normalize().MultiplyScalarNew(-1 * float32(frictionMagnitude))
 		p.ApplyForce(frictionForce)
 		return frictionForce
@@ -86,19 +76,14 @@ func (p *Particle) ApplyFriction() *vector.Vector {
 	return nil
 }
 
-func (p *Particle) OnSurface() bool {
-	return p.Position.X-p.Radius <= 0 ||
-		p.Position.X+p.Radius >= float32(SCREEN_WIDTH) ||
-		p.Position.Y-p.Radius <= 0 ||
-		p.Position.Y+p.Radius >= float32(SCREEN_HEIGHT)
+func (p *Particle) OnGround() bool {
+	return p.Position.Y-p.Radius <= 0 || p.Position.Y+p.Radius >= float32(config.SCREEN_HEIGHT)
 }
 
 func (p *Particle) ApplyForces() {
 	for _, force := range p.Forces {
 		if force.IsConstant || (force.Condition != nil && force.Condition(p)) {
-			fmt.Println("Applying force", force.Vector.X, force.Vector.Y)
 			p.ApplyForce(&force.Vector)
 		}
 	}
 }
-
