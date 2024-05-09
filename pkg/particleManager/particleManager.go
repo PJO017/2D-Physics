@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"pjo018/2dphysics/internal/vector"
+	"pjo018/2dphysics/pkg/config"
 	"pjo018/2dphysics/pkg/particle"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -34,10 +35,9 @@ func (pm *Particlemanager) CreateRandomParticle(screenWidth, screenHeight int32)
 	pm.lock.Lock()
 	defer pm.lock.Unlock()
 
-	radius := 10 + rand.Float32()*10
 	x := 0 + rand.Float32()*(float32(screenWidth))
-	// y := 0 + rand.Float32()*(float32(screenHeight))
-	y := float32(0) + radius
+	y := 0 + rand.Float32()*(float32(screenHeight))
+	radius := float32(config.PARTICLE_RADIUS)
 	mass := 5 * radius
 
 	r := uint8(rand.Intn(255))
@@ -45,8 +45,6 @@ func (pm *Particlemanager) CreateRandomParticle(screenWidth, screenHeight int32)
 	b := uint8(rand.Intn(255))
 	a := uint8(rand.Intn(255))
 
-	// velX := 5 + rand.Float32()*5
-	// velY := 10 + rand.Float32()*10
 	velX := float32(1)
 	velY := float32(0)
 

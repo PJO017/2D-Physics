@@ -35,9 +35,8 @@ func processInput(system *system.System) {
 }
 
 func update(pm *particlemanager.Particlemanager, deltaTime float64) {
-	for _, p := range pm.Particles {
-		p.Update(deltaTime)
-		p.HandleCollision(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, config.DAMPING_FACTOR)
+	for idx, p := range pm.Particles {
+		p.Update(deltaTime, idx, pm.Particles)
 	}
 }
 

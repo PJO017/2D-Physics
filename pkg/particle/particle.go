@@ -1,6 +1,8 @@
 package particle
 
 import (
+	"fmt"
+
 	"pjo018/2dphysics/internal/vector"
 	"pjo018/2dphysics/pkg/config"
 	"pjo018/2dphysics/pkg/utils"
@@ -33,27 +35,62 @@ func (p *Particle) Draw(Renderer *sdl.Renderer) {
 	}
 }
 
-func (p *Particle) Update(deltaTime float64) {
+func (p *Particle) Update(deltaTime float64, idx int, particles []*Particle) {
 	p.ApplyForces()
 	frictionForce := p.ApplyFriction()
+
 	p.Velocity.AddVector(p.Acceleration.MultiplyScalarNew(float32(deltaTime) / 1000))
 	p.Position.AddVector(&p.Velocity)
+	p.HandleCollisions(particles, idx)
 
 	if frictionForce != nil {
 		p.Acceleration.SubtractVector(frictionForce.MultiplyScalarNew(1 / p.Mass))
 	}
 }
 
-func (p *Particle) HandleCollision(screenWidth, screenHeight int, DAMPING_FACTOR float32) {
-	if p.Position.X-p.Radius < 0 || p.Position.X+p.Radius > float32(screenWidth) {
-		p.Velocity.X *= -1 * DAMPING_FACTOR
-		p.Position.X = utils.Clamp(p.Position.X, p.Radius, float32(screenWidth)-p.Radius)
+func ParticlesCollide(p1, p2 *Particle) bool {
+	return (p1.Position.X-p2.Position.X)*(p1.Position.X-p2.Position.X)+(p1.Position.Y-p2.Position.Y)*(p1.Position.Y-p2.Position.Y) < (p1.Radius+p2.Radius)*(p1.Radius+p2.Radius)
+}
+
+func (p *Particle) HandleCollisions(particles []*Particle, idx int) {
+	if p.Position.X-p.Radius < 0 || p.Position.X+p.Radius > float32(config.SCREEN_WIDTH) {
+		p.Velocity.X *= -1 * config.DAMPING_FACTOR
+		p.Position.X = utils.Clamp(p.Position.X, p.Radius, float32(config.SCREEN_WIDTH)-p.Radius)
 
 	}
 
-	if p.Position.Y-p.Radius < 0 || p.Position.Y+p.Radius > float32(screenHeight) {
-		p.Velocity.Y *= -1 * DAMPING_FACTOR
-		p.Position.Y = utils.Clamp(p.Position.Y, p.Radius, float32(screenHeight)-p.Radius)
+	if p.Position.Y-p.Radius < 0 || p.Position.Y+p.Radius > float32(config.SCREEN_HEIGHT) {
+		p.Velocity.Y *= -1 * config.DAMPING_FACTOR
+		p.Position.Y = utils.Clamp(p.Position.Y, p.Radius, float32(config.SCREEN_HEIGHT)-p.Radius)
+	}
+
+	for i := idx + 1; i < len(particles); i++ {
+		if ParticlesCollide(p, particles[i]) {
+			fmt.Println("Handling collisions")
+
+			p1 := p
+			p2 := particles[i]
+
+			// Relative velocity
+			relativeVelocity := p1.Velocity.SubtractVectorNew(&p2.Velocity)
+
+			// Center of Mass Velocity
+			cmVelocity := p1.Velocity.MultiplyScalarNew(p1.Mass).AddVector(p2.Velocity.MultiplyScalarNew(p2.Mass)).MultiplyScalarNew(1 / (p1.Mass + p2.Mass) * 0.5)
+
+			// Relative momentum
+			p1Momentum := relativeVelocity.MultiplyScalarNew(p1.Mass)
+
+			p1FinalMomentum := p1Momentum.MultiplyScalarNew((p1.Mass - p2.Mass) / (p1.Mass + p2.Mass))
+			p2FinalMomentum := p1Momentum.MultiplyScalarNew((p2.Mass - p1.Mass) / (p2.Mass + p1.Mass))
+
+			// Final velocities
+			p1FinalVelocity := p1FinalMomentum.MultiplyScalarNew(1 / p1.Mass).AddVector(cmVelocity)
+			p2FinalVelocity := p2FinalMomentum.MultiplyScalarNew(1 / p2.Mass).AddVector(cmVelocity)
+
+			p1.Velocity = *p1FinalVelocity
+			p2.Velocity = *p2FinalVelocity
+
+		}
 	}
 }
 
