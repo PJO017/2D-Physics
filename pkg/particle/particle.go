@@ -1,8 +1,6 @@
 package particle
 
 import (
-	"fmt"
-
 	"pjo018/2dphysics/internal/vector"
 	"pjo018/2dphysics/pkg/config"
 	"pjo018/2dphysics/pkg/utils"
@@ -48,10 +46,6 @@ func (p *Particle) Update(deltaTime float64, idx int, particles []*Particle) {
 	}
 }
 
-func ParticlesCollide(p1, p2 *Particle) bool {
-	return (p1.Position.X-p2.Position.X)*(p1.Position.X-p2.Position.X)+(p1.Position.Y-p2.Position.Y)*(p1.Position.Y-p2.Position.Y) < (p1.Radius+p2.Radius)*(p1.Radius+p2.Radius)
-}
-
 func (p *Particle) HandleCollisions(particles []*Particle, idx int) {
 	if p.Position.X-p.Radius < 0 || p.Position.X+p.Radius > float32(config.SCREEN_WIDTH) {
 		p.Velocity.X *= -1 * config.DAMPING_FACTOR
@@ -65,31 +59,23 @@ func (p *Particle) HandleCollisions(particles []*Particle, idx int) {
 	}
 
 	for i := idx + 1; i < len(particles); i++ {
-		if ParticlesCollide(p, particles[i]) {
-			fmt.Println("Handling collisions")
+		p1 := p
+		p2 := particles[i]
+		distance := p1.Position.Distance(&p2.Position)
+		minDistance := p1.Radius + p2.Radius
+		if distance < minDistance {
 
-			p1 := p
-			p2 := particles[i]
+			normal := p2.Position.SubtractVectorNew(&p1.Position).Normalize()
+			relativeVelocity := p2.Velocity.SubtractVectorNew(&p1.Velocity)
+			impulse := normal.MultiplyScalarNew(relativeVelocity.DotProduct(normal))
 
-			// Relative velocity
-			relativeVelocity := p1.Velocity.SubtractVectorNew(&p2.Velocity)
+			// Fix overlap
+			repulsion := normal.MultiplyScalarNew(minDistance - distance)
+			p1.Position.SubtractVector(repulsion)
+			p2.Position.AddVector(repulsion)
 
-			// Center of Mass Velocity
-			cmVelocity := p1.Velocity.MultiplyScalarNew(p1.Mass).AddVector(p2.Velocity.MultiplyScalarNew(p2.Mass)).MultiplyScalarNew(1 / (p1.Mass + p2.Mass) * 0.5)
-
-			// Relative momentum
-			p1Momentum := relativeVelocity.MultiplyScalarNew(p1.Mass)
-
-			p1FinalMomentum := p1Momentum.MultiplyScalarNew((p1.Mass - p2.Mass) / (p1.Mass + p2.Mass))
-			p2FinalMomentum := p1Momentum.MultiplyScalarNew((p2.Mass - p1.Mass) / (p2.Mass + p1.Mass))
-
-			// Final velocities
-			p1FinalVelocity := p1FinalMomentum.MultiplyScalarNew(1 / p1.Mass).AddVector(cmVelocity)
-			p2FinalVelocity := p2FinalMomentum.MultiplyScalarNew(1 / p2.Mass).AddVector(cmVelocity)
-
-			p1.Velocity = *p1FinalVelocity
-			p2.Velocity = *p2FinalVelocity
-
+			p1.Velocity.AddVector(impulse)
+			p2.Velocity.SubtractVector(impulse)
 		}
 	}
 }

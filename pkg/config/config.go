@@ -4,8 +4,8 @@ const (
 	FRICTION_COEFFIECIENT = 0.5
 	SCREEN_WIDTH          = 1200
 	SCREEN_HEIGHT         = 800
-	PARTICLE_COUNT        = 2
-	PARTICLE_RADIUS       = 30
+	PARTICLE_COUNT        = 90
+	PARTICLE_RADIUS       = 10
 	FPS                   = 120
 	TIME_STEP             = 1.0 / FPS
 	FRAME_DELAY           = 1000 / FPS
