@@ -69,13 +69,23 @@ func (p *Particle) HandleCollisions(particles []*Particle, idx int) {
 			relativeVelocity := p2.Velocity.SubtractVectorNew(&p1.Velocity)
 			impulse := normal.MultiplyScalarNew(relativeVelocity.DotProduct(normal))
 
-			// Fix overlap
-			repulsion := normal.MultiplyScalarNew(minDistance - distance)
-			p1.Position.SubtractVector(repulsion)
-			p2.Position.AddVector(repulsion)
+			totalMass := p1.Mass + p2.Mass
 
+			overlap := (minDistance - distance) / 2
+
+			correction := normal.MultiplyScalarNew(overlap)
+			correction1 := correction.MultiplyScalarNew(p1.Mass / totalMass)
+			correction2 := correction.MultiplyScalarNew(p2.Mass / totalMass)
+
+			p1.Position.SubtractVector(correction1)
+			p2.Position.AddVector(correction2)
+
+			impulse.MultiplyScalar(2 * p2.Mass / totalMass)
 			p1.Velocity.AddVector(impulse)
-			p2.Velocity.SubtractVector(impulse)
+
+			impulse.MultiplyScalar(-1)
+			impulse.MultiplyScalar(2 * p1.Mass / totalMass)
+			p2.Velocity.AddVector(impulse)
 		}
 	}
 }

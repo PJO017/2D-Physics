@@ -45,7 +45,7 @@ func (pm *Particlemanager) CreateRandomParticle(screenWidth, screenHeight int32)
 	b := uint8(rand.Intn(255))
 	a := uint8(rand.Intn(255))
 
-	velX := float32(5)
+	velX := float32(0)
 	velY := float32(0)
 
 	particle := particle.CreateParticle(x, y, radius, mass, sdl.Color{R: r, G: g, B: b, A: a})
